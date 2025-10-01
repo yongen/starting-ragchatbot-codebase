@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .box { fill: #f0f0f0; stroke: #333; stroke-width: 2; }
+      .frontend { fill: #e3f2fd; }
+      .backend { fill: #f3e5f5; }
+      .database { fill: #e8f5e8; }
+      .ai { fill: #fff3e0; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #333; }
+      .title { font-size: 14px; font-weight: bold; }
+      .arrow { stroke: #666; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .flow-text { font-size: 10px; fill: #666; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7"
+            refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" class="text title" text-anchor="middle">RAG Chatbot Query Flow</text>
+
+  <!-- Frontend Layer -->
+  <rect x="50" y="60" width="300" height="120" class="box frontend" rx="5"/>
+  <text x="200" y="85" class="text title" text-anchor="middle">Frontend (JavaScript)</text>
+  <text x="60" y="105" class="text">1. User types query</text>
+  <text x="60" y="125" class="text">2. sendMessage() triggered</text>
+  <text x="60" y="145" class="text">3. POST /api/query with JSON</text>
+  <text x="60" y="165" class="text">4. Show loading animation</text>
+
+  <!-- API Layer -->
+  <rect x="450" y="60" width="300" height="120" class="box backend" rx="5"/>
+  <text x="600" y="85" class="text title" text-anchor="middle">FastAPI Endpoint</text>
+  <text x="460" y="105" class="text">app.py:56 @app.post("/api/query")</text>
+  <text x="460" y="125" class="text">• Parse QueryRequest</text>
+  <text x="460" y="145" class="text">• Create/get session_id</text>
+  <text x="460" y="165" class="text">• Call rag_system.query()</text>
+
+  <!-- RAG System -->
+  <rect x="50" y="220" width="300" height="140" class="box backend" rx="5"/>
+  <text x="200" y="245" class="text title" text-anchor="middle">RAG System</text>
+  <text x="60" y="265" class="text">rag_system.py:102</text>
+  <text x="60" y="285" class="text">• Build prompt</text>
+  <text x="60" y="305" class="text">• Get conversation history</text>
+  <text x="60" y="325" class="text">• Call ai_generator.generate_response()</text>
+  <text x="60" y="345" class="text">• Update session history</text>
+
+  <!-- AI Generator -->
+  <rect x="450" y="220" width="300" height="140" class="box ai" rx="5"/>
+  <text x="600" y="245" class="text title" text-anchor="middle">AI Generator</text>
+  <text x="460" y="265" class="text">ai_generator.py:43</text>
+  <text x="460" y="285" class="text">• Build system prompt + context</text>
+  <text x="460" y="305" class="text">• Call Claude API with tools</text>
+  <text x="460" y="325" class="text">• Handle tool execution if needed</text>
+  <text x="460" y="345" class="text">• Return final response</text>
+
+  <!-- Claude API -->
+  <rect x="850" y="220" width="250" height="140" class="box ai" rx="5"/>
+  <text x="975" y="245" class="text title" text-anchor="middle">Claude API</text>
+  <text x="860" y="265" class="text">anthropic.messages.create()</text>
+  <text x="860" y="285" class="text">• Analyzes query</text>
+  <text x="860" y="305" class="text">• Decides if search needed</text>
+  <text x="860" y="325" class="text">• Uses search_course_content tool</text>
+  <text x="860" y="345" class="text">• Synthesizes final answer</text>
+
+  <!-- Search Tool -->
+  <rect x="450" y="400" width="300" height="120" class="box backend" rx="5"/>
+  <text x="600" y="425" class="text title" text-anchor="middle">Search Tool</text>
+  <text x="460" y="445" class="text">search_tools.py:52</text>
+  <text x="460" y="465" class="text">• CourseSearchTool.execute()</text>
+  <text x="460" y="485" class="text">• Semantic vector search</text>
+  <text x="460" y="505" class="text">• Filter by course/lesson</text>
+
+  <!-- Vector Store -->
+  <rect x="850" y="400" width="250" height="120" class="box database" rx="5"/>
+  <text x="975" y="425" class="text title" text-anchor="middle">Vector Store</text>
+  <text x="860" y="445" class="text">vector_store.py</text>
+  <text x="860" y="465" class="text">• ChromaDB similarity search</text>
+  <text x="860" y="485" class="text">• Return relevant chunks</text>
+  <text x="860" y="505" class="text">• Track sources</text>
+
+  <!-- Document Processor -->
+  <rect x="50" y="560" width="300" height="120" class="box database" rx="5"/>
+  <text x="200" y="585" class="text title" text-anchor="middle">Document Processing</text>
+  <text x="60" y="605" class="text">document_processor.py</text>
+  <text x="60" y="625" class="text">• Parse course files</text>
+  <text x="60" y="645" class="text">• Extract metadata</text>
+  <text x="60" y="665" class="text">• Create chunks with context</text>
+
+  <!-- Arrows -->
+  <!-- Frontend to API -->
+  <line x1="350" y1="120" x2="450" y2="120" class="arrow"/>
+  <text x="380" y="115" class="flow-text">HTTP POST</text>
+
+  <!-- API to RAG -->
+  <line x1="520" y1="180" x2="280" y2="220" class="arrow"/>
+  <text x="360" y="205" class="flow-text">query()</text>
+
+  <!-- RAG to AI Generator -->
+  <line x1="350" y1="290" x2="450" y2="290" class="arrow"/>
+  <text x="380" y="285" class="flow-text">generate_response()</text>
+
+  <!-- AI Generator to Claude -->
+  <line x1="750" y1="290" x2="850" y2="290" class="arrow"/>
+  <text x="780" y="285" class="flow-text">API call</text>
+
+  <!-- Claude to Search Tool -->
+  <line x1="900" y1="360" x2="650" y2="400" class="arrow"/>
+  <text x="750" y="385" class="flow-text">tool_use</text>
+
+  <!-- Search Tool to Vector Store -->
+  <line x1="750" y1="460" x2="850" y2="460" class="arrow"/>
+  <text x="780" y="455" class="flow-text">search()</text>
+
+  <!-- Vector Store back to Search Tool -->
+  <line x1="850" y1="480" x2="750" y2="480" class="arrow"/>
+  <text x="770" y="495" class="flow-text">results</text>
+
+  <!-- Search Tool back to Claude -->
+  <line x1="650" y1="420" x2="900" y2="380" class="arrow"/>
+  <text x="750" y="405" class="flow-text">tool_result</text>
+
+  <!-- Claude back to AI Generator -->
+  <line x1="850" y1="310" x2="750" y2="310" class="arrow"/>
+  <text x="780" y="325" class="flow-text">response</text>
+
+  <!-- AI Generator back to RAG -->
+  <line x1="450" y1="310" x2="350" y2="310" class="arrow"/>
+  <text x="380" y="325" class="flow-text">answer + sources</text>
+
+  <!-- RAG back to API -->
+  <line x1="280" y1="240" x2="520" y2="200" class="arrow"/>
+  <text x="360" y="225" class="flow-text">return tuple</text>
+
+  <!-- API back to Frontend -->
+  <line x1="450" y1="140" x2="350" y2="140" class="arrow"/>
+  <text x="380" y="155" class="flow-text">JSON response</text>
+
+  <!-- Document connection -->
+  <line x1="350" y1="620" x2="850" y2="520" class="arrow" stroke-dasharray="5,5"/>
+  <text x="550" y="575" class="flow-text">Initial data loading</text>
+
+  <!-- Legend -->
+  <rect x="50" y="720" width="80" height="20" class="frontend"/>
+  <text x="140" y="735" class="text">Frontend</text>
+
+  <rect x="200" y="720" width="80" height="20" class="backend"/>
+  <text x="290" y="735" class="text">Backend</text>
+
+  <rect x="350" y="720" width="80" height="20" class="ai"/>
+  <text x="440" y="735" class="text">AI/Claude</text>
+
+  <rect x="500" y="720" width="80" height="20" class="database"/>
+  <text x="590" y="735" class="text">Data Layer</text>
+</svg>
