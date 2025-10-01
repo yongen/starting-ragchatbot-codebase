@@ -23,6 +23,22 @@ chmod +x run.sh
 cd backend && uv run uvicorn app:app --reload --port 8000
 ```
 
+### Code Quality Tools
+```bash
+# Format code with black and auto-fix linting issues
+./format.sh
+
+# Run all quality checks (black, ruff, mypy)
+./check.sh
+
+# Individual commands
+uv run black backend/ frontend/              # Format code
+uv run black --check backend/ frontend/      # Check formatting
+uv run ruff check backend/ frontend/         # Lint code
+uv run ruff check --fix backend/ frontend/   # Lint and auto-fix
+uv run mypy backend/                         # Type check
+```
+
 ### Application Access
 - Web Interface: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
@@ -108,10 +124,34 @@ Core packages managed via `uv`:
 - `fastapi` + `uvicorn` - Web framework and server
 - `python-dotenv` - Environment variable management
 
+Development tools:
+- `black` - Code formatter (line length: 100)
+- `ruff` - Fast Python linter with auto-fix
+- `mypy` - Static type checker
+- `pytest` - Testing framework
+
+## Code Quality Standards
+
+### Formatting
+- Line length: 100 characters
+- Black formatter enforces consistent style
+- Ruff handles import sorting and code quality
+
+### Type Checking
+- Mypy configured for gradual typing
+- Type hints recommended but not required
+- External packages have type checking disabled
+
+### Configuration
+All quality tool settings are in `pyproject.toml`:
+- Black formatting rules
+- Ruff linting rules (pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade)
+- Mypy type checking configuration
+
 ## Development Notes
 
-- No test framework currently implemented
 - ChromaDB data stored in `./chroma_db` directory
 - Application auto-reloads in development mode (`--reload` flag)
 - CORS enabled for all origins in development
 - Static files served with no-cache headers for development
+- Run `./check.sh` before committing to ensure code quality

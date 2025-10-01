@@ -7,6 +7,7 @@ import time
 @dataclass
 class ToolCall:
     """Represents a tool call execution"""
+
     tool_name: str
     tool_id: str
     parameters: Dict[str, Any]
@@ -18,6 +19,7 @@ class ToolCall:
 @dataclass
 class RoundResult:
     """Results from a single conversation round"""
+
     round_number: int
     api_response: Any  # Anthropic response object
     tool_calls_made: List[ToolCall] = field(default_factory=list)
@@ -53,16 +55,16 @@ class ConversationState:
             return "No response generated"
 
         last_round = self.rounds[-1]
-        if last_round.api_response and hasattr(last_round.api_response, 'content'):
+        if last_round.api_response and hasattr(last_round.api_response, "content"):
             for content_block in last_round.api_response.content:
-                if hasattr(content_block, 'type') and content_block.type == 'text':
+                if hasattr(content_block, "type") and content_block.type == "text":
                     return content_block.text
 
         # Fallback: look for text in any round
         for round_result in reversed(self.rounds):
-            if round_result.api_response and hasattr(round_result.api_response, 'content'):
+            if round_result.api_response and hasattr(round_result.api_response, "content"):
                 for content_block in round_result.api_response.content:
-                    if hasattr(content_block, 'type') and content_block.type == 'text':
+                    if hasattr(content_block, "type") and content_block.type == "text":
                         return content_block.text
 
         return "Unable to extract response text"
@@ -70,7 +72,7 @@ class ConversationState:
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
-    
+
     # Static system prompt to avoid rebuilding on each call
     SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to comprehensive tools for course information.
 
@@ -116,23 +118,22 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
-    
+
     def __init__(self, api_key: str, model: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
-        
+
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
-    
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None,
-                         max_rounds: int = 2) -> str:
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
+
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+        max_rounds: int = 2,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
         Supports sequential tool calling across multiple rounds.
@@ -157,7 +158,9 @@ Provide only the direct answer to what was asked.
             query, conversation_history, tools, tool_manager, max_rounds
         )
 
-    def _generate_simple_response(self, query: str, conversation_history: Optional[str] = None) -> str:
+    def _generate_simple_response(
+        self, query: str, conversation_history: Optional[str] = None
+    ) -> str:
         """Generate response without tool usage"""
         system_content = (
             f"{self.SYSTEM_PROMPT}\n\nPrevious conversation:\n{conversation_history}"
@@ -168,14 +171,20 @@ Provide only the direct answer to what was asked.
         api_params = {
             **self.base_params,
             "messages": [{"role": "user", "content": query}],
-            "system": system_content
+            "system": system_content,
         }
 
         response = self.client.messages.create(**api_params)
         return response.content[0].text
 
-    def _execute_sequential_rounds(self, query: str, conversation_history: Optional[str],
-                                  tools: List, tool_manager, max_rounds: int) -> str:
+    def _execute_sequential_rounds(
+        self,
+        query: str,
+        conversation_history: Optional[str],
+        tools: List,
+        tool_manager,
+        max_rounds: int,
+    ) -> str:
         """
         Execute sequential tool calling rounds for complex queries
 
@@ -198,8 +207,7 @@ Provide only the direct answer to what was asked.
             for round_num in range(1, max_rounds + 1):
                 # Build messages for this round
                 messages = self._build_messages_for_round(
-                    initial_messages if round_num == 1 else [],
-                    conversation_state
+                    initial_messages if round_num == 1 else [], conversation_state
                 )
 
                 # Update system content for current round
@@ -216,9 +224,7 @@ Provide only the direct answer to what was asked.
                 conversation_state.add_round(round_result)
 
                 # Check termination conditions
-                should_terminate, _ = self._should_terminate(
-                    round_result, round_num, max_rounds
-                )
+                should_terminate, _ = self._should_terminate(round_result, round_num, max_rounds)
 
                 if should_terminate:
                     break
@@ -232,8 +238,14 @@ Provide only the direct answer to what was asked.
         # Return final response
         return conversation_state.get_final_response()
 
-    def _execute_single_round(self, messages: List[Dict], system_content: str,
-                             tools: List, tool_manager, round_number: int) -> RoundResult:
+    def _execute_single_round(
+        self,
+        messages: List[Dict],
+        system_content: str,
+        tools: List,
+        tool_manager,
+        round_number: int,
+    ) -> RoundResult:
         """Execute a single conversation round with tool calling"""
 
         # Prepare API parameters
@@ -242,7 +254,7 @@ Provide only the direct answer to what was asked.
             "messages": messages,
             "system": system_content,
             "tools": tools,
-            "tool_choice": {"type": "auto"}
+            "tool_choice": {"type": "auto"},
         }
 
         try:
@@ -255,9 +267,8 @@ Provide only the direct answer to what was asked.
                 api_response=response,
                 has_tool_use=response.stop_reason == "tool_use",
                 has_text_content=any(
-                    hasattr(block, 'type') and block.type == "text"
-                    for block in response.content
-                )
+                    hasattr(block, "type") and block.type == "text" for block in response.content
+                ),
             )
 
             # Add assistant's response to messages
@@ -271,32 +282,25 @@ Provide only the direct answer to what was asked.
             return round_result
 
         except Exception as e:
-            return RoundResult(
-                round_number=round_number,
-                api_response=None,
-                error=str(e)
-            )
+            return RoundResult(round_number=round_number, api_response=None, error=str(e))
 
     def _execute_tools_for_round(self, round_result: RoundResult, tool_manager):
         """Execute all tool calls for a round and add results to messages"""
         tool_results = []
 
         for content_block in round_result.api_response.content:
-            if hasattr(content_block, 'type') and content_block.type == "tool_use":
+            if hasattr(content_block, "type") and content_block.type == "tool_use":
                 start_time = time.time()
 
                 tool_call = ToolCall(
                     tool_name=content_block.name,
                     tool_id=content_block.id,
-                    parameters=content_block.input
+                    parameters=content_block.input,
                 )
 
                 try:
                     # Execute the tool
-                    result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
-                    )
+                    result = tool_manager.execute_tool(content_block.name, **content_block.input)
 
                     tool_call.result = result
                     tool_call.execution_time = time.time() - start_time
@@ -305,7 +309,7 @@ Provide only the direct answer to what was asked.
                     tool_result = {
                         "type": "tool_result",
                         "tool_use_id": content_block.id,
-                        "content": result
+                        "content": result,
                     }
                     tool_results.append(tool_result)
 
@@ -317,7 +321,7 @@ Provide only the direct answer to what was asked.
                     tool_result = {
                         "type": "tool_result",
                         "tool_use_id": content_block.id,
-                        "content": f"Tool execution error: {str(e)}"
+                        "content": f"Tool execution error: {str(e)}",
                     }
                     tool_results.append(tool_result)
 
@@ -329,7 +333,9 @@ Provide only the direct answer to what was asked.
             round_result.messages_exchanged.append(tool_results_message)
             round_result.tool_results = tool_results
 
-    def _should_terminate(self, round_result: RoundResult, round_num: int, max_rounds: int) -> tuple[bool, str]:
+    def _should_terminate(
+        self, round_result: RoundResult, round_num: int, max_rounds: int
+    ) -> tuple[bool, str]:
         """Determine if conversation should terminate"""
 
         # Check for errors
@@ -351,8 +357,9 @@ Provide only the direct answer to what was asked.
         # Continue if tools were used and we haven't hit limits
         return False, "continue"
 
-    def _build_messages_for_round(self, initial_messages: List[Dict],
-                                 conversation_state: ConversationState) -> List[Dict]:
+    def _build_messages_for_round(
+        self, initial_messages: List[Dict], conversation_state: ConversationState
+    ) -> List[Dict]:
         """Build message list for API call in current round"""
         if conversation_state.rounds:
             # Use accumulated conversation context
@@ -361,8 +368,12 @@ Provide only the direct answer to what was asked.
             # First round - use initial messages
             return initial_messages
 
-    def _build_system_content_for_round(self, conversation_history: Optional[str],
-                                       round_number: int, previous_rounds: List[RoundResult]) -> str:
+    def _build_system_content_for_round(
+        self,
+        conversation_history: Optional[str],
+        round_number: int,
+        previous_rounds: List[RoundResult],
+    ) -> str:
         """Build system content with round-specific context"""
         content_parts = [self.SYSTEM_PROMPT]
 
@@ -399,47 +410,38 @@ Provide only the direct answer to what was asked.
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
         Handle execution of tool calls and get follow-up response.
-        
+
         Args:
             initial_response: The response containing tool use requests
             base_params: Base API parameters
             tool_manager: Manager to execute tools
-            
+
         Returns:
             Final response text after tool execution
         """
         # Start with existing messages
         messages = base_params["messages"].copy()
-        
+
         # Add AI's tool use response
         messages.append({"role": "assistant", "content": initial_response.content})
-        
+
         # Execute all tool calls and collect results
         tool_results = []
         for content_block in initial_response.content:
             if content_block.type == "tool_use":
-                tool_result = tool_manager.execute_tool(
-                    content_block.name, 
-                    **content_block.input
+                tool_result = tool_manager.execute_tool(content_block.name, **content_block.input)
+
+                tool_results.append(
+                    {"type": "tool_result", "tool_use_id": content_block.id, "content": tool_result}
                 )
-                
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": tool_result
-                })
-        
+
         # Add tool results as single message
         if tool_results:
             messages.append({"role": "user", "content": tool_results})
-        
+
         # Prepare final API call without tools
-        final_params = {
-            **self.base_params,
-            "messages": messages,
-            "system": base_params["system"]
-        }
-        
+        final_params = {**self.base_params, "messages": messages, "system": base_params["system"]}
+
         # Get final response
         final_response = self.client.messages.create(**final_params)
         return final_response.content[0].text

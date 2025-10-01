@@ -7,6 +7,7 @@ import time
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ai_generator import AIGenerator, ConversationState, RoundResult, ToolCall
@@ -61,15 +62,13 @@ class MockResponseBuilder:
             if response_config["type"] == "tool_use":
                 mock_responses.append(
                     MockResponseBuilder.create_tool_use_response(
-                        response_config["tool_calls"],
-                        response_config.get("text", "")
+                        response_config["tool_calls"], response_config.get("text", "")
                     )
                 )
             else:
                 mock_responses.append(
                     MockResponseBuilder.create_text_response(
-                        response_config["text"],
-                        response_config.get("stop_reason", "end_turn")
+                        response_config["text"], response_config.get("stop_reason", "end_turn")
                     )
                 )
         return mock_responses
@@ -81,7 +80,7 @@ class TestAIGeneratorSequentialToolCalling:
     @pytest.fixture
     def ai_generator(self):
         """Create AIGenerator instance with mocked Anthropic client"""
-        with patch('anthropic.Anthropic') as mock_anthropic:
+        with patch("anthropic.Anthropic") as mock_anthropic:
             generator = AIGenerator("test-key", "claude-3-sonnet-20240229")
             generator.client = mock_anthropic.return_value
             return generator
@@ -102,43 +101,38 @@ class TestAIGeneratorSequentialToolCalling:
                 "description": "Search course materials",
                 "input_schema": {
                     "type": "object",
-                    "properties": {
-                        "query": {"type": "string"},
-                        "course_name": {"type": "string"}
-                    },
-                    "required": ["query"]
-                }
+                    "properties": {"query": {"type": "string"}, "course_name": {"type": "string"}},
+                    "required": ["query"],
+                },
             },
             {
                 "name": "get_course_outline",
                 "description": "Get course structure",
                 "input_schema": {
                     "type": "object",
-                    "properties": {
-                        "course_title": {"type": "string"}
-                    },
-                    "required": ["course_title"]
-                }
-            }
+                    "properties": {"course_title": {"type": "string"}},
+                    "required": ["course_title"],
+                },
+            },
         ]
 
     # Backwards Compatibility Tests
 
-    def test_single_tool_call_backwards_compatibility(self, ai_generator, mock_tool_manager, mock_tools):
+    def test_single_tool_call_backwards_compatibility(
+        self, ai_generator, mock_tool_manager, mock_tools
+    ):
         """Verify existing single tool call behavior remains unchanged"""
         # Setup mock responses
-        initial_response = MockResponseBuilder.create_tool_use_response([
-            {"name": "search_course_content", "input": {"query": "test query"}}
-        ])
+        initial_response = MockResponseBuilder.create_tool_use_response(
+            [{"name": "search_course_content", "input": {"query": "test query"}}]
+        )
         final_response = MockResponseBuilder.create_text_response("Final answer")
 
         ai_generator.client.messages.create.side_effect = [initial_response, final_response]
 
         # Execute
         result = ai_generator.generate_response(
-            query="test query",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="test query", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         # Verify
@@ -164,9 +158,7 @@ class TestAIGeneratorSequentialToolCalling:
         ai_generator.client.messages.create.return_value = response
 
         result = ai_generator.generate_response(
-            query="General question",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="General question", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         assert result == "Answer without tools"
@@ -177,15 +169,13 @@ class TestAIGeneratorSequentialToolCalling:
     def test_two_round_tool_calling_success(self, ai_generator, mock_tool_manager, mock_tools):
         """Test successful 2-round sequential tool calling"""
         # Setup sequential responses - each round has tool use, then next round should provide final text
-        round1_response = MockResponseBuilder.create_tool_use_response([
-            {"name": "get_course_outline", "input": {"course_title": "Python Basics"}}
-        ])
+        round1_response = MockResponseBuilder.create_tool_use_response(
+            [{"name": "get_course_outline", "input": {"course_title": "Python Basics"}}]
+        )
         # Second round provides final response with text content
         round2_response = MockResponseBuilder.create_text_response("Complete comparison result")
 
-        ai_generator.client.messages.create.side_effect = [
-            round1_response, round2_response
-        ]
+        ai_generator.client.messages.create.side_effect = [round1_response, round2_response]
 
         # Mock tool execution results
         mock_tool_manager.execute_tool.side_effect = [
@@ -196,7 +186,7 @@ class TestAIGeneratorSequentialToolCalling:
         result = ai_generator.generate_response(
             query="Compare Python functions to other languages",
             tools=mock_tools,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         # Verify
@@ -205,15 +195,30 @@ class TestAIGeneratorSequentialToolCalling:
         assert mock_tool_manager.execute_tool.call_count == 1
 
         # Verify tool execution
-        mock_tool_manager.execute_tool.assert_called_with("get_course_outline", course_title="Python Basics")
+        mock_tool_manager.execute_tool.assert_called_with(
+            "get_course_outline", course_title="Python Basics"
+        )
 
     def test_context_preservation_between_rounds(self, ai_generator, mock_tool_manager, mock_tools):
         """Test that context is preserved correctly between tool calling rounds"""
         # Setup responses
         responses = [
-            {"type": "tool_use", "tool_calls": [{"name": "get_course_outline", "input": {"course_title": "Data Science"}}]},
-            {"type": "tool_use", "tool_calls": [{"name": "search_course_content", "input": {"query": "machine learning", "course_name": "Data Science"}}]},
-            {"type": "text", "text": "Based on the course outline and content search..."}
+            {
+                "type": "tool_use",
+                "tool_calls": [
+                    {"name": "get_course_outline", "input": {"course_title": "Data Science"}}
+                ],
+            },
+            {
+                "type": "tool_use",
+                "tool_calls": [
+                    {
+                        "name": "search_course_content",
+                        "input": {"query": "machine learning", "course_name": "Data Science"},
+                    }
+                ],
+            },
+            {"type": "text", "text": "Based on the course outline and content search..."},
         ]
 
         mock_responses = MockResponseBuilder.create_sequential_responses(responses)
@@ -221,7 +226,7 @@ class TestAIGeneratorSequentialToolCalling:
 
         mock_tool_manager.execute_tool.side_effect = [
             "Outline: ML in lesson 3",
-            "ML content: algorithms, models..."
+            "ML content: algorithms, models...",
         ]
 
         # Execute with conversation history
@@ -229,7 +234,7 @@ class TestAIGeneratorSequentialToolCalling:
             query="Tell me about machine learning in the data science course",
             conversation_history="Previous: We discussed statistics basics",
             tools=mock_tools,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         # Verify context preservation in API calls
@@ -249,8 +254,12 @@ class TestAIGeneratorSequentialToolCalling:
         """Test termination after maximum rounds (2)"""
         # Setup 2 tool use responses to test max limit
         responses = [
-            MockResponseBuilder.create_tool_use_response([{"name": "search_course_content", "input": {"query": "test1"}}]),
-            MockResponseBuilder.create_tool_use_response([{"name": "search_course_content", "input": {"query": "test2"}}])
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "search_course_content", "input": {"query": "test1"}}]
+            ),
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "search_course_content", "input": {"query": "test2"}}]
+            ),
         ]
 
         ai_generator.client.messages.create.side_effect = responses
@@ -258,9 +267,7 @@ class TestAIGeneratorSequentialToolCalling:
 
         # Execute
         result = ai_generator.generate_response(
-            query="Test max rounds",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="Test max rounds", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         # Should terminate after 2 rounds
@@ -268,20 +275,22 @@ class TestAIGeneratorSequentialToolCalling:
         assert mock_tool_manager.execute_tool.call_count == 2
         assert result != ""  # Should return some response
 
-    def test_natural_termination_with_text_response(self, ai_generator, mock_tool_manager, mock_tools):
+    def test_natural_termination_with_text_response(
+        self, ai_generator, mock_tool_manager, mock_tools
+    ):
         """Test natural termination when AI provides text response"""
         responses = [
-            MockResponseBuilder.create_tool_use_response([{"name": "search_course_content", "input": {"query": "test"}}]),
-            MockResponseBuilder.create_text_response("Final answer after tool use")
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "search_course_content", "input": {"query": "test"}}]
+            ),
+            MockResponseBuilder.create_text_response("Final answer after tool use"),
         ]
 
         ai_generator.client.messages.create.side_effect = responses
         mock_tool_manager.execute_tool.return_value = "Tool result"
 
         result = ai_generator.generate_response(
-            query="Test natural termination",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="Test natural termination", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         assert result == "Final answer after tool use"
@@ -296,7 +305,7 @@ class TestAIGeneratorSequentialToolCalling:
         result = ai_generator.generate_response(
             query="Test without tool manager",
             tools=mock_tools,
-            tool_manager=None  # No tool manager provided
+            tool_manager=None,  # No tool manager provided
         )
 
         # Should use simple response path
@@ -310,21 +319,22 @@ class TestAIGeneratorSequentialToolCalling:
         # First call succeeds, second fails
         # Create proper APIError mock
         from unittest.mock import Mock
+
         api_error = Mock(spec=anthropic.APIError)
         api_error.message = "Rate limit exceeded"
 
         ai_generator.client.messages.create.side_effect = [
-            MockResponseBuilder.create_tool_use_response([{"name": "search_course_content", "input": {"query": "test"}}]),
-            api_error
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "search_course_content", "input": {"query": "test"}}]
+            ),
+            api_error,
         ]
 
         mock_tool_manager.execute_tool.return_value = "Tool result"
 
         # Should return error response gracefully
         result = ai_generator.generate_response(
-            query="Test API error",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="Test API error", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         # Should return an error message but not crash
@@ -334,18 +344,16 @@ class TestAIGeneratorSequentialToolCalling:
 
     def test_tool_execution_error_handling(self, ai_generator, mock_tool_manager, mock_tools):
         """Test handling of tool execution errors"""
-        response = MockResponseBuilder.create_tool_use_response([
-            {"name": "search_course_content", "input": {"query": "test"}}
-        ])
+        response = MockResponseBuilder.create_tool_use_response(
+            [{"name": "search_course_content", "input": {"query": "test"}}]
+        )
         final_response = MockResponseBuilder.create_text_response("Handled error gracefully")
 
         ai_generator.client.messages.create.side_effect = [response, final_response]
         mock_tool_manager.execute_tool.side_effect = Exception("Tool execution failed")
 
         result = ai_generator.generate_response(
-            query="Test tool error",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="Test tool error", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         # Should handle error and provide response
@@ -354,18 +362,16 @@ class TestAIGeneratorSequentialToolCalling:
 
     def test_empty_tool_results_handling(self, ai_generator, mock_tool_manager, mock_tools):
         """Test handling when tool returns empty or None results"""
-        response = MockResponseBuilder.create_tool_use_response([
-            {"name": "search_course_content", "input": {"query": "nonexistent"}}
-        ])
+        response = MockResponseBuilder.create_tool_use_response(
+            [{"name": "search_course_content", "input": {"query": "nonexistent"}}]
+        )
         final_response = MockResponseBuilder.create_text_response("No results found")
 
         ai_generator.client.messages.create.side_effect = [response, final_response]
         mock_tool_manager.execute_tool.return_value = ""  # Empty result
 
         result = ai_generator.generate_response(
-            query="Test empty results",
-            tools=mock_tools,
-            tool_manager=mock_tool_manager
+            query="Test empty results", tools=mock_tools, tool_manager=mock_tool_manager
         )
 
         assert result == "No results found"
@@ -375,21 +381,21 @@ class TestAIGeneratorSequentialToolCalling:
     def test_course_comparison_scenario(self, ai_generator, mock_tool_manager, mock_tools):
         """Test complex scenario: comparing two courses"""
         responses = [
-            MockResponseBuilder.create_tool_use_response([
-                {"name": "get_course_outline", "input": {"course_title": "Python Basics"}}
-            ]),
-            MockResponseBuilder.create_text_response("Based on both course outlines, here's the comparison...")
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "get_course_outline", "input": {"course_title": "Python Basics"}}]
+            ),
+            MockResponseBuilder.create_text_response(
+                "Based on both course outlines, here's the comparison..."
+            ),
         ]
 
         ai_generator.client.messages.create.side_effect = responses
-        mock_tool_manager.execute_tool.side_effect = [
-            "Python: Variables, Functions, Classes..."
-        ]
+        mock_tool_manager.execute_tool.side_effect = ["Python: Variables, Functions, Classes..."]
 
         result = ai_generator.generate_response(
             query="Compare Python Basics and JavaScript Fundamentals courses",
             tools=mock_tools,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         assert "comparison" in result
@@ -399,10 +405,10 @@ class TestAIGeneratorSequentialToolCalling:
     def test_drill_down_scenario(self, ai_generator, mock_tool_manager, mock_tools):
         """Test drill-down scenario: outline first, then specific content"""
         responses = [
-            MockResponseBuilder.create_tool_use_response([
-                {"name": "get_course_outline", "input": {"course_title": "Machine Learning"}}
-            ]),
-            MockResponseBuilder.create_text_response("Neural networks are covered in lesson 5...")
+            MockResponseBuilder.create_tool_use_response(
+                [{"name": "get_course_outline", "input": {"course_title": "Machine Learning"}}]
+            ),
+            MockResponseBuilder.create_text_response("Neural networks are covered in lesson 5..."),
         ]
 
         ai_generator.client.messages.create.side_effect = responses
@@ -413,7 +419,7 @@ class TestAIGeneratorSequentialToolCalling:
         result = ai_generator.generate_response(
             query="Where are neural networks covered in the Machine Learning course?",
             tools=mock_tools,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         assert "lesson 5" in result.lower()
@@ -441,7 +447,7 @@ class TestConversationState:
         round_result = RoundResult(
             round_number=1,
             api_response=mock_response,
-            messages_exchanged=[{"role": "assistant", "content": "test"}]
+            messages_exchanged=[{"role": "assistant", "content": "test"}],
         )
 
         state.add_round(round_result)
@@ -461,10 +467,7 @@ class TestConversationState:
         mock_text_block.text = "Final response text"
         mock_response.content = [mock_text_block]
 
-        round_result = RoundResult(
-            round_number=1,
-            api_response=mock_response
-        )
+        round_result = RoundResult(round_number=1, api_response=mock_response)
 
         state.add_round(round_result)
 
