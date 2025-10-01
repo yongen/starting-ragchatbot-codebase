@@ -24,6 +24,24 @@
     --welcome-border: #2563eb;
 }
 
+/* Light theme variables */
+body.light-theme {
+    --primary-color: #1d4ed8;
+    --primary-hover: #1e40af;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #cbd5e1;
+    --user-message: #1d4ed8;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --focus-ring: rgba(29, 78, 216, 0.3);
+    --welcome-bg: #dbeafe;
+    --welcome-border: #1d4ed8;
+}
+
 /* Base Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -34,6 +52,7 @@ body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Container - Full Screen */
@@ -73,6 +92,7 @@ header h1 {
     display: flex;
     overflow: hidden;
     background: var(--background);
+    transition: background-color 0.3s ease;
 }
 
 /* Left Sidebar */
@@ -83,6 +103,7 @@ header h1 {
     padding: 1.5rem;
     overflow-y: auto;
     flex-shrink: 0;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -101,6 +122,14 @@ header h1 {
 
 .sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
+}
+
+body.light-theme .sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+}
+
+body.light-theme .sidebar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .sidebar-section {
@@ -131,6 +160,7 @@ header h1 {
     width: 100%;
     max-width: 800px;
     margin: 0;
+    transition: background-color 0.3s ease;
 }
 
 /* Chat Messages */
@@ -142,6 +172,7 @@ header h1 {
     flex-direction: column;
     gap: 1rem;
     background: var(--background);
+    transition: background-color 0.3s ease;
 }
 
 /* Custom Scrollbar */
@@ -160,6 +191,14 @@ header h1 {
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
+}
+
+body.light-theme .chat-messages::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+}
+
+body.light-theme .chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* Message Styles */
@@ -192,6 +231,7 @@ header h1 {
     border-radius: 18px;
     word-wrap: break-word;
     line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .message.user .message-content {
@@ -268,6 +308,12 @@ header h1 {
     display: inline-block;
 }
 
+body.light-theme .source-link {
+    background: rgba(29, 78, 216, 0.1);
+    border: 1px solid rgba(29, 78, 216, 0.3);
+    color: #1e40af;
+}
+
 .source-link:hover {
     background: rgba(37, 99, 235, 0.2);
     border-color: var(--primary-color);
@@ -277,9 +323,20 @@ header h1 {
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
+body.light-theme .source-link:hover {
+    background: rgba(29, 78, 216, 0.15);
+    border-color: #1e40af;
+    color: #1e40af;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.2);
+}
+
 .source-link:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+body.light-theme .source-link:focus {
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.4);
 }
 
 /* Markdown formatting styles */
@@ -321,12 +378,22 @@ header h1 {
     font-size: 0.875em;
 }
 
+body.light-theme .message-content code {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+
 .message-content pre {
     background-color: rgba(0, 0, 0, 0.2);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
     margin: 0.5rem 0;
+}
+
+body.light-theme .message-content pre {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
 }
 
 .message-content pre code {
@@ -347,6 +414,11 @@ header h1 {
     border: 2px solid var(--border-color);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     position: relative;
+}
+
+body.light-theme .message.welcome-message .message-content {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: #bfdbfe;
 }
 
 .message-content strong {
@@ -371,6 +443,7 @@ header h1 {
     background: var(--background);
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Chat Input */
@@ -382,7 +455,7 @@ header h1 {
     border-radius: 24px;
     color: var(--text-primary);
     font-size: 0.95rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 #chatInput:focus {
@@ -568,6 +641,7 @@ details[open] .suggested-header::before {
     border-radius: 8px;
     border: 1px solid var(--border-color);
     margin-bottom: 0.75rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .stat-item:last-child {
@@ -677,7 +751,7 @@ details[open] .suggested-header::before {
     color: var(--text-primary);
     font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     text-align: left;
     width: 100%;
 }
@@ -774,5 +848,82 @@ details[open] .suggested-header::before {
 @media (max-width: 1024px) {
     .sidebar {
         width: 280px;
+    }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+/* Icon animations */
+.theme-toggle svg {
+    position: absolute;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0);
+}
+
+.theme-toggle .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+body.light-theme .theme-toggle .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+body.light-theme .theme-toggle .moon-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .theme-toggle {
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+    }
+
+    .theme-toggle svg {
+        width: 18px;
+        height: 18px;
     }
 }
