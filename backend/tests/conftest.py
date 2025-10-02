@@ -136,7 +136,3 @@ def sample_chunks():
             "text": "Let's begin with basics"
         }
     ]
-=======
-        "ANTHROPIC_MODEL": "claude-3-sonnet-20240229",
-    }
->>>>>>> e850bdf (Add code quality tooling and enforce formatting standards)
